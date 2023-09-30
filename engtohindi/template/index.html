@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>PDF TRANSLATER</title>
+		<link rel="stylesheet" href="style.css">
+		<!-- css -->
+		<style>
+			*{
+    margin: 0%;
+    padding: 0%;
+    box-sizing: border-box;
+}
+
+body{
+    background-color:rebeccapurple;
+}
+.container{
+    display: flex;
+    flex-direction: column;
+}
+h1{
+    text-align: center;
+    color: black;
+}
+.textcontainer{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+textarea,p{
+    width: 500px;
+    height: 500px;
+    border: 4px solid yellow;
+    background-color: violet;
+}
+button{
+    height: 30px;
+    width: 200px;
+
+}
+		</style>
+		<!-- AJAX REQUESTS -->
+
+		<script
+			type="text/javascript"
+			src="https://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"
+		></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"
+			integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		></script>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Translator</h1>
+			
+			<div class="textcontainer">
+				<textarea id="test"></textarea> 
+			<p id="result"></p>
+			</div>
+			<div class="buttonset">
+				<input type="file" id="pdfFile" />
+			<button onclick="translateInputFile()">Translate PDF File</button>
+			<button onclick="translateTextAreaFile()">Translate TextArea</button>
+			
+			<button onclick="speakFile()">speak File</button>
+			</div>
+		</div>
+	</body>
+</html>
+
+<script>
+	window.onload = () => {
+		console.clear();
+	};
+
+    function speakFile(){
+    	var text = document.querySelector("#test").value;
+		console.log(text);
+		$.ajax({
+			url: "/speak",
+			type: "GET",
+			async: true,
+			data: { userText: text, data: "text" },
+			success: function (data) {
+				document.querySelector("#result").innerHTML = data.translatedText;
+			},
+		});
+
+    }
+	function translateInputFile() {
+		var file = document.getElementById("pdfFile").files[0];
+		var reader = new FileReader();
+
+		reader.onload = function (e) {
+			var pdfData = e.target.result;
+			const uint8Array = new Uint8Array(pdfData);
+			sendToServer(uint8Array);
+		};
+
+		// Read the PDF file as an ArrayBuffer
+		reader.readAsArrayBuffer(file);
+	}
+
+	function sendToServer(uint8Array) {
+		$.ajax({
+			type: "POST",
+			url: "/TranslatePDF",
+			processData: false,
+			contentType: "application/octet-stream",
+			data: uint8Array.buffer,
+			success: function (response) {
+				console.log(response);
+				document.getElementById("result").innerText = response.translatedText;
+			},
+			error: function (xhr, status, error) {
+				console.error("Error:", error);
+			},
+		});
+	}
+
+	function translateTextAreaFile() {
+		var text = document.querySelector("#test").value;
+		console.log(text);
+		$.ajax({
+			url: "/TranslateText",
+			type: "GET",
+			async: true,
+			data: { userText: text, data: "text" },
+			success: function (data) {
+				document.querySelector("#result").innerHTML = data.translatedText;
+			},
+		});
+	}
+</script>
